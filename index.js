@@ -1,38 +1,35 @@
-import express, { Express, Request, Response } from 'express';
-import cors from 'cors';
-import pool from './dataBase';
-
-const app: Express = express();
-app.use(cors());
-app.use(express.json());
-
-const port: number = 3001;
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const dataBase_1 = __importDefault(require("./dataBase"));
+const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+const port = 3001;
 // Test database connection
-pool.getConnection((err, connection) => {
+dataBase_1.default.getConnection((err, connection) => {
     if (err) {
         console.error('An error occurred while connecting to the DB');
         return;
     }
     console.log('MySQL Connection established');
-
     // Example query, change this to whatever you need
     connection.query('SELECT * FROM user', (queryError, results) => {
-        connection.release(); 
-
+        connection.release();
         if (queryError) {
             console.error('Error querying the database:', queryError);
             return;
         }
-
         console.log('Query results:', results);
     });
 });
-
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (req, res) => {
     res.status(200).json({ result: 'success' });
 });
-
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
