@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const dataBase_1 = __importDefault(require("../dataBase"));
-const cabinet_model = {
+const pickup_model = {
     // Verify pickup code
     verifyPickupCode: (pickupCode) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -44,37 +44,6 @@ const cabinet_model = {
             console.error('Error verifying pickup code and updating statuses:', error);
             throw error;
         }
-    }),
-    // Verify dropoff code
-    verifyDropoffCode: (dropoffCode) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            const query = `
-        SELECT parcel_dropoff_code, locker.cabinet_status, parcel.parcel_status
-        FROM parcel
-        INNER JOIN locker ON parcel.locker_number = locker.locker_number
-        WHERE parcel_dropoff_code = ?`;
-            const [result] = yield dataBase_1.default.promise().query(query, [dropoffCode]);
-            if (result.length > 0) {
-                const cabinetStatus = result[0].cabinet_status;
-                const parcelStatus = result[0].parcel_status;
-                if (cabinetStatus === 1 && parcelStatus === 1) {
-                    // Cabinet is open for dropoff and parcel is ready for dropoff
-                    // Update cabinet status to package to dropoff (2)
-                    yield dataBase_1.default.promise().query('UPDATE locker SET cabinet_status = 2 WHERE locker_number = ?', [result[0].locker_number]);
-                    // Update parcel status to in the dropoff locker (1)
-                    yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_status = 1 WHERE parcel_dropoff_code = ?', [dropoffCode]);
-                    // Invalidate the dropoff code 
-                    // set it to -1 so that it can't be used again
-                    yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_dropoff_code = -1 WHERE parcel_dropoff_code = ?', [dropoffCode]);
-                    return true; // Code is valid, and actions are performed
-                }
-            }
-            return false; // Code is invalid or conditions are not met
-        }
-        catch (error) {
-            console.error('Error verifying dropoff code and updating statuses:', error);
-            throw error;
-        }
-    }),
+    })
 };
-exports.default = cabinet_model;
+exports.default = pickup_model;
