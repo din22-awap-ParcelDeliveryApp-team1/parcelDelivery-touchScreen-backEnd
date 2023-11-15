@@ -1,10 +1,14 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import pool from './dataBase';
+import cabinet_controller from './controllers/cabinet_controller';
 
 const app: Express = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+app.use('/cabinet', cabinet_controller);
 
 const port: number = 3001;
 
@@ -16,17 +20,6 @@ pool.getConnection((err, connection) => {
     }
     console.log('MySQL Connection established');
 
-    // Example query, change this to whatever you need
-    connection.query('SELECT * FROM user', (queryError, results) => {
-        connection.release(); 
-
-        if (queryError) {
-            console.error('Error querying the database:', queryError);
-            return;
-        }
-
-        console.log('Query results:', results);
-    });
 });
 
 app.get('/', (req: Request, res: Response) => {
@@ -36,3 +29,4 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+

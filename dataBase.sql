@@ -19,7 +19,6 @@ CREATE TABLE `user` (
 CREATE TABLE `parcel` (
   `id_parcel` INT NOT NULL AUTO_INCREMENT,
   `id_user` INT DEFAULT NULL,
-  `locker_number` TINYINT DEFAULT NULL,
   `reciever_name` VARCHAR(45) NOT NULL,
   `reciever_telephone` VARCHAR(45) NOT NULL,
   `reciever_street_address` VARCHAR(45) NOT NULL,
@@ -33,11 +32,16 @@ CREATE TABLE `parcel` (
   `parcel_dropoff_date` DATE NOT NULL,
   `parcel_pickup_date` DATE NOT NULL,
   `parcel_last_pickup_date` DATE NOT NULL,
-  `parcel_dropoff_code` INT DEFAULT NULL,
-  `parcel_pickup_code` INT DEFAULT NULL,
-  `status` TINYINT NOT NULL,
+  `parcel_dropoff_code` INT NOT NULL,
+  `parcel_pickup_code` INT NOT NULL,
+  `parcel_status` TINYINT NOT NULL,
+  `parcel_dropoff_locker` TINYINT(5) NOT NULL,
+  `parcel_pickup_locker` TINYINT(5) NOT NULL,
+  `parcel_height` FLOAT NOT NULL,
+  `parcel_width` FLOAT NOT NULL,
+  `parcel_depth` FLOAT NOT NULL,
+  `parcel_mass` FLOAT NOT NULL,
   PRIMARY KEY (`id_parcel`),
-  KEY `locker_number_idx` (`locker_number`),
   KEY `id_user_idx` (`id_user`),
   CONSTRAINT `id_user` FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -48,52 +52,24 @@ CREATE TABLE `locker` (
   `locker_number` TINYINT NOT NULL,
   `cabinet_status` TINYINT NOT NULL,
   PRIMARY KEY (`id_cabinet`),
-  UNIQUE KEY `unique_locker_number` (`locker_number`),
   KEY `parcel_id_idx` (`parcel_id`),
   CONSTRAINT `parcel_id` FOREIGN KEY (`parcel_id`) REFERENCES `parcel` (`id_parcel`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Add foreign key constraint for parcel referring to locker
-ALTER TABLE `parcel`
-ADD CONSTRAINT `locker_number` FOREIGN KEY (`locker_number`) REFERENCES `locker` (`locker_number`) ON DELETE SET NULL;
 
 /*
 Values for cabinet status:
 1 - cabinet is empty
-2 - parcel to dropoff
-3 - parcel to pickup
+2 - cabinet has a parcel to collect by driver
+3 - cabinet has a parcel to pickup by a customer
 */
 
 /*
 Values for parcel status:
-1 - parcel is in the dropoff locker
-2 - parcel is transported (by consumer user to dropoff locker or by driver to pickup locker)
-3 - parcel is in the pickup locker
-4 - parcel is delivered to the reciever (final status)
+0 - parcel is ready (moment when sender confirm the action of sending parcel)
+1 - parcel is in the dropoff locker (moment when sender drop off the parcel at dropoff locker and close the cabinet door)
+2 - parcel is in transportation (from the moment of driver collect the parcel and transport it to the destination locker)
+3 - parcel is in the pickup locker (moment when driver put the package in the destination(pickup location) locker and close the door
+4 - parcel is delivered to the reciever (moment when reciever collect the parcel from pickup locker and close the cabinet door )
 */
--- insert data for testing
--- Insert data into `user` table
--- INSERT INTO user (
---   user_name,
---   password,
---   first_name,
---   last_name,
---   telephone,
---   email,
---   street_address,
---   postal_code,
---   city
--- ) VALUES (
---   'john_doe',
---   'password123',
---   'John',
---   'Doe',
---   '1234567890',
---   'john.doe@example.com',
---   '123 Main St',
---   '12345',
---   'CityA'
--- );
-
-
 
