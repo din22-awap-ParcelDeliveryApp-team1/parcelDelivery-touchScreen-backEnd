@@ -38,12 +38,9 @@ router.post('/dropoff', async (req, res) => {
     cabinetNumber: selectedCabinet,
     lockerNumber: lockerNumber,
     });
-  
-     // Update parcel id in the locker table for the specified cabinet
-     await dropoff_model.updateParcelIdInLocker(result.parcelId, selectedCabinet);
-  
+ 
     // after the user closes the door
-    await dropoff_model.updateStatusAfterDropoff(parseInt(dropoffCode), selectedCabinet, result.parcelId);
+    await dropoff_model.updateStatusAfterDropoff(selectedCabinet, result.parcelId);
   
     } else {
       // Code is invalid or conditions not met
