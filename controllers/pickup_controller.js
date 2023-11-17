@@ -16,24 +16,36 @@ const express_1 = __importDefault(require("express"));
 const pickup_model_1 = __importDefault(require("../models/pickup_model"));
 const router = express_1.default.Router();
 // verify pickup code
-router.post('/user_pickup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { pickupCode } = req.body;
-    if (!pickupCode) {
-        return res.status(400).json({ error: 'Pickup code is required' });
+router.post('/pickup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { pickupCode, lockerNumber } = req.body;
+    if (!pickupCode || !lockerNumber) {
+        return res.status(400).json({ error: 'Pickup code and locker number are required' });
     }
     try {
-        const isCodeValid = yield pickup_model_1.default.verifyPickupCode(parseInt(pickupCode));
-        if (isCodeValid) {
-            // Code is valid, open the cabinet door
-            res.json({ message: 'Cabinet door opened successfully, pickup your package and close the door' });
+        const result = yield pickup_model_1.default.verifyPickupCode(parseInt(pickupCode), parseInt(lockerNumber));
+        if (result.isValid) {
+            // Code is valid, check locker status
+            if (result.parcelId === undefined) {
+                // No associated parcel, return error
+                return res.status(404).json({ error: 'No parcel found for the specified pickup code and locker number' });
+            }
+            // Open the cabinet door
+            const cabinetNumber = yield pickup_model_1.default.findCabinetNumber(result.parcelId);
+            res.json({
+                message: `Door ${cabinetNumber} open for pickup, take your package and close the door`,
+                lockerNumber: lockerNumber,
+            });
+            // after the user closes the door
+            const cabinetId = yield pickup_model_1.default.findCabinetId(result.parcelId);
+            yield pickup_model_1.default.updateStatusAfterPickup(cabinetId, result.parcelId);
         }
         else {
-            // Code is invalid
-            res.status(403).json({ error: 'Incorrect pickup code' });
+            // Code is invalid or conditions not met
+            res.status(403).json({ error: 'Incorrect pickup code or locker number' });
         }
     }
     catch (error) {
-        console.error('Error opening cabinet door:', error);
+        console.error('Error handling pickup request:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }));

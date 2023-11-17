@@ -32,19 +32,41 @@ const dropoff_model = {
             throw error;
         }
     }),
-    // Find available cabinets for dropoff
-    findAvailableCabinets: (lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
+    // Find available cabinet id for dropoff
+    findAvailableCabinetId: (lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const query = `
     SELECT locker.id_cabinet
     FROM locker
     JOIN parcel ON locker.locker_number = parcel.desired_dropoff_locker
-    WHERE locker.cabinet_status = 'free'`;
+    WHERE locker.locker_number = ? AND locker.cabinet_status = 'free'`;
             const [result] = yield dataBase_1.default.promise().query(query, [lockerNumber]);
             return result.map((row) => row.id_cabinet);
         }
         catch (error) {
             console.error('Error finding available cabinets:', error);
+            throw error;
+        }
+    }),
+    // get the cabinet number by cabinet id
+    getCabinetNumber: (cabinetId) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const query = `
+    SELECT cabinet_number
+      FROM locker
+      WHERE id_cabinet = ?;`;
+            const [result] = yield dataBase_1.default.promise().query(query, [cabinetId]);
+            if (result.length === 0) {
+                // handle the case where the cabinet ID is not found
+                console.error('Cabinet ID not found:', cabinetId);
+                return -1; // or throw an error, depending on your error handling strategy
+            }
+            const cabinetNumber = result[0].cabinet_number;
+            console.log(`Cabinet Number for Cabinet ID ${cabinetId}: ${cabinetNumber}`);
+            return cabinetNumber;
+        }
+        catch (error) {
+            console.error('Error finding cabinet number:', error);
             throw error;
         }
     }),
@@ -60,7 +82,12 @@ const dropoff_model = {
             // Remove dropoff code from pincode in parcel table
             yield dataBase_1.default.promise().query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
             // set the date of dropoff
-            yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_dropoff_date = NOW() WHERE id_parcel = ?', [parcelId]);
+            const updateDropoffDate = `
+                              UPDATE parcel
+                              SET parcel_dropoff_date = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+                              WHERE id_parcel = ?;
+                            `;
+            yield dataBase_1.default.promise().query(updateDropoffDate, [parcelId]);
         }
         catch (error) {
             console.error('Error updating status after dropoff:', error);

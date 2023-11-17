@@ -15,35 +15,95 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dataBase_1 = __importDefault(require("../dataBase"));
 const pickup_model = {
     // Verify pickup code
-    verifyPickupCode: (pickupCode) => __awaiter(void 0, void 0, void 0, function* () {
+    verifyPickupCode: (pickupCode, lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const query = `
-        SELECT parcel_pickup_code, locker.cabinet_status, parcel.parcel_status
-        FROM parcel
-        INNER JOIN locker ON parcel.locker_number = locker.locker_number
-        WHERE parcel_pickup_code = ?`;
-            const [result] = yield dataBase_1.default.promise().query(query, [pickupCode]);
+    SELECT id_parcel
+    FROM parcel
+    WHERE pin_code = ? AND 
+      (
+        CASE
+          WHEN alternative_pickup_locker IS NULL THEN desired_pickup_locker
+          ELSE alternative_pickup_locker
+        END
+      ) = ? AND status = 'parcel_in_pickup_locker';
+    `;
+            const [result] = yield dataBase_1.default.promise().query(query, [pickupCode, lockerNumber]);
             if (result.length > 0) {
-                const cabinetStatus = result[0].cabinet_status;
-                const parcelStatus = result[0].parcel_status;
-                if (cabinetStatus === 3 && parcelStatus === 3) {
-                    // Cabinet is open and parcel is in the pickup locker
-                    // Update cabinet status to empty (1)
-                    yield dataBase_1.default.promise().query('UPDATE locker SET cabinet_status = 1 WHERE locker_number = ?', [result[0].locker_number]);
-                    // Update parcel status to delivered (4)
-                    yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_status = 4 WHERE parcel_pickup_code = ?', [pickupCode]);
-                    // Invalidate the pickup code 
-                    //   set it to -1 so that it can't be used again
-                    yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_pickup_code = -1 WHERE parcel_pickup_code = ?', [pickupCode]);
-                    return true; // Code is valid, and actions are performed
-                }
+                return { isValid: true, parcelId: result[0].id_parcel };
             }
-            return false; // Code is invalid or conditions are not met
+            return { isValid: false };
         }
         catch (error) {
-            console.error('Error verifying pickup code and updating statuses:', error);
+            console.error('Error verifying pickup code:', error);
             throw error;
         }
-    })
+    }),
+    // Find cabinet_id with parcel_id in locker table
+    findCabinetId: (parcelId) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const getCabinetIdQuery = `
+      SELECT id_cabinet
+      FROM locker
+      WHERE parcel_id = ?;
+    `;
+            const [cabinetResult] = yield dataBase_1.default.promise().query(getCabinetIdQuery, [parcelId]);
+            if (cabinetResult.length === 0) {
+                // handle the case where the cabinet ID is not found
+                console.error('Cabinet ID not found for parcel ID:', parcelId);
+                return -1; // or throw an error, depending on your error handling strategy
+            }
+            return cabinetResult[0].id_cabinet;
+        }
+        catch (error) {
+            console.error('Error finding cabinet ID:', error);
+            throw error;
+        }
+    }),
+    // Find cabinet_number with cabinet_id in locker table
+    findCabinetNumber: (cabinetId) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const getCabinetNumberQuery = `
+      SELECT cabinet_number
+      FROM locker
+      WHERE id_cabinet = ?;
+    `;
+            const [numberResult] = yield dataBase_1.default.promise().query(getCabinetNumberQuery, [cabinetId]);
+            if (numberResult.length === 0) {
+                // handle the case where the cabinet number is not found
+                console.error('Cabinet number not found for ID:', cabinetId);
+                return -1; // or throw an error, depending on your error handling strategy
+            }
+            return numberResult[0].cabinet_number;
+        }
+        catch (error) {
+            console.error('Error finding cabinet number:', error);
+            throw error;
+        }
+    }),
+    // update status after pickup
+    updateStatusAfterPickup: (cabinetId, parcelId) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            // Update cabinet status
+            yield dataBase_1.default.promise().query('UPDATE locker SET cabinet_status = ? WHERE id_cabinet = ?', ['free', cabinetId]);
+            // Update parcel status
+            yield dataBase_1.default.promise().query('UPDATE parcel SET status = ? WHERE id_parcel = ?', ['reciever_recieved_parcel', parcelId]);
+            // Remove pickup code from pincode in parcel table
+            yield dataBase_1.default.promise().query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
+            // Remove parcel id from selected cabinet in locker table
+            yield dataBase_1.default.promise().query('UPDATE locker SET parcel_id = NULL WHERE id_cabinet = ?', [cabinetId]);
+            // set the date of pickup
+            const updatePickupDate = `
+                              UPDATE parcel
+                              SET parcel_pickup_date = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+                              WHERE id_parcel = ?;
+                            `;
+            yield dataBase_1.default.promise().query(updatePickupDate, [parcelId]);
+        }
+        catch (error) {
+            console.error('Error updating status after pickup:', error);
+            throw error;
+        }
+    }),
 };
 exports.default = pickup_model;
