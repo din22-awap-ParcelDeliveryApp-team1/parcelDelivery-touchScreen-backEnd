@@ -43,10 +43,8 @@ router.post('/dropoff', (req, res) => __awaiter(void 0, void 0, void 0, function
                 cabinetNumber: selectedCabinet,
                 lockerNumber: lockerNumber,
             });
-            // Update parcel id in the locker table for the specified cabinet
-            yield dropoff_model_1.default.updateParcelIdInLocker(result.parcelId, selectedCabinet);
             // after the user closes the door
-            yield dropoff_model_1.default.updateStatusAfterDropoff(parseInt(dropoffCode), selectedCabinet, result.parcelId);
+            yield dropoff_model_1.default.updateStatusAfterDropoff(selectedCabinet, result.parcelId);
         }
         else {
             // Code is invalid or conditions not met

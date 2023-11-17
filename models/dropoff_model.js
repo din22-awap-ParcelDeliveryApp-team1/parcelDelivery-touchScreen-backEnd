@@ -49,30 +49,21 @@ const dropoff_model = {
         }
     }),
     // Update cabinet status, parcel status, and invalidate dropoff code
-    updateStatusAfterDropoff: (dropoffCode, selectedCabinet, parcelId) => __awaiter(void 0, void 0, void 0, function* () {
+    updateStatusAfterDropoff: (selectedCabinet, parcelId) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            // Update cabinet status to (package to dropoff (2))
-            yield dataBase_1.default.promise().query('UPDATE locker SET cabinet_status = 2, parcel_id = ? WHERE id_cabinet = ?', [parcelId, selectedCabinet]);
-            // Update parcel status to (in the dropoff locker (1))
-            yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_status = 1, parcel_dropoff_locker = ? WHERE id_parcel = ?', [selectedCabinet, parcelId]);
-            // Update parcel id in the locker table for the specified cabinet
+            // Add parcel id to selected cabinet in locker table
             yield dataBase_1.default.promise().query('UPDATE locker SET parcel_id = ? WHERE id_cabinet = ?', [parcelId, selectedCabinet]);
-            // Invalidate the dropoff code
-            // set it to -1 
-            yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_dropoff_code = -1 WHERE parcel_dropoff_code = ?', [dropoffCode]);
+            // Update cabinet status
+            yield dataBase_1.default.promise().query('UPDATE locker SET cabinet_status = ? WHERE id_cabinet = ?', ['has_dropoff_parcel', selectedCabinet]);
+            // Update parcel status
+            yield dataBase_1.default.promise().query('UPDATE parcel SET status = ? WHERE id_parcel = ?', ['parcel_at_dropoff_locker', parcelId]);
+            // Remove dropoff code from pincode in parcel table
+            yield dataBase_1.default.promise().query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
+            // set the date of dropoff
+            yield dataBase_1.default.promise().query('UPDATE parcel SET parcel_dropoff_date = NOW() WHERE id_parcel = ?', [parcelId]);
         }
         catch (error) {
             console.error('Error updating status after dropoff:', error);
-            throw error;
-        }
-    }),
-    // Update parcel id in the locker table for the specified cabinet
-    updateParcelIdInLocker: (parcelId, cabinetId) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            yield dataBase_1.default.promise().query('UPDATE locker SET parcel_id = ? WHERE id_cabinet = ?', [parcelId, cabinetId]);
-        }
-        catch (error) {
-            console.error('Error updating parcel id in locker:', error);
             throw error;
         }
     }),
