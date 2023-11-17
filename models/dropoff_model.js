@@ -32,10 +32,10 @@ const dropoff_model = {
             throw error;
         }
     }),
+    // Find available cabinets for dropoff
     findAvailableCabinets: (lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const query = `
-<<<<<<< HEAD
     SELECT locker.id_cabinet
     FROM locker
     JOIN parcel ON locker.locker_number = parcel.desired_dropoff_locker
