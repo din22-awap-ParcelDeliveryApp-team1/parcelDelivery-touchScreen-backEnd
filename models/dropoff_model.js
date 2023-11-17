@@ -18,23 +18,17 @@ const dropoff_model = {
     verifyDropoffCode: (dropoffCode, lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const query = `
-      SELECT parcel.id_parcel, locker.cabinet_status, parcel.parcel_status
-      FROM parcel
-      INNER JOIN locker ON parcel.parcel_dropoff_locker = locker.locker_number
-      WHERE parcel_dropoff_code = ? AND locker.locker_number = ?`;
+        SELECT id_parcel
+        FROM parcel
+        WHERE pin_code = ? AND desired_dropoff_locker = ? AND status = 'ready_to_deliver'`;
             const [result] = yield dataBase_1.default.promise().query(query, [dropoffCode, lockerNumber]);
             if (result.length > 0) {
-                // const cabinetStatus = result[0].cabinet_status;
-                const parcelStatus = result[0].parcel_status;
-                // Check if the cabinet status is empty (1) and the parcel status is ready (0)
-                if (parcelStatus === 0) {
-                    return { isValid: true, parcelId: result[0].id_parcel };
-                }
+                return { isValid: true, parcelId: result[0].id_parcel };
             }
             return { isValid: false };
         }
         catch (error) {
-            console.error('Error verifying dropoff code and updating statuses:', error);
+            console.error('Error verifying dropoff code:', error);
             throw error;
         }
     }),
@@ -42,10 +36,10 @@ const dropoff_model = {
     findAvailableCabinets: (lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const query = `
-      SELECT locker.id_cabinet
-      FROM locker
-      JOIN parcel ON locker.locker_number = parcel.parcel_dropoff_locker
-      WHERE locker.cabinet_status = 1 AND locker.locker_number = ? AND parcel.parcel_status = 0`;
+    SELECT locker.id_cabinet
+    FROM locker
+    JOIN parcel ON locker.locker_number = parcel.desired_dropoff_locker
+    WHERE locker.cabinet_status = 'free'`;
             const [result] = yield dataBase_1.default.promise().query(query, [lockerNumber]);
             return result.map((row) => row.id_cabinet);
         }
