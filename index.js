@@ -16,7 +16,7 @@ app.use('/locker', dropoff_controller_1.default);
 app.use('/locker', pickup_controller_1.default);
 const port = 3001;
 // Test database connection
-dataBase_1.default.getConnection((err, connection) => {
+dataBase_1.default.getConnection((err) => {
     if (err) {
         console.error('An error occurred while connecting to the DB');
         return;

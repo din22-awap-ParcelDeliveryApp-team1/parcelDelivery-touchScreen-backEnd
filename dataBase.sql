@@ -29,9 +29,9 @@ CREATE TABLE `parcel` (
   `sender_street_address` varchar(45) DEFAULT NULL,
   `sender_postal_code` char(5) DEFAULT NULL,
   `sender_city` varchar(45) DEFAULT NULL,
-  `parcel_dropoff_date` date NOT NULL,
-  `parcel_pickup_date` date NOT NULL,
-  `parcel_last_pickup_date` date NOT NULL,
+  `parcel_dropoff_date` date DEFAULT NULL,
+  `parcel_pickup_date` date DEFAULT NULL,
+  `parcel_last_pickup_date` date DEFAULT NULL,
   `pin_code` int DEFAULT NULL,
   `status` ENUM('ready_to_deliver', 'parcel_at_dropoff_locker', 'parcel_in_transportation', 'parcel_in_pickup_locker', 'reciever_recieved_parcel') NOT NULL,
   `desired_dropoff_locker` tinyint NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE `parcel` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `locker` (
-  `id_cabinet` tinyint NOT NULL,
+  `id_cabinet` tinyint NOT NULL AUTO_INCREMENT,
   `locker_number` tinyint NOT NULL,
   `cabinet_number` tinyint NOT NULL,
   `cabinet_status` ENUM('free', 'has_dropoff_parcel', 'has_pickup_parcel') NOT NULL,
@@ -68,8 +68,10 @@ has_pickup_parcel - cabinet has a parcel to pickup by a customer
 -- Insert dummy data into `user` table
 INSERT INTO `user` (`user_name`, `password`, `first_name`, `last_name`, `telephone`, `email`, `street_address`, `postal_code`, `city`)
 VALUES
-  ('testuser1', 'password1', 'John', 'Doe', '123456789', 'john.doe@example.com', '123 Main St', '12345', 'City1'),
-  ('testuser2', 'password2', 'Jane', 'Smith', '987654321', 'jane.smith@example.com', '456 Oak St', '54321', 'City2');
+ ('James', '1234', 'James', 'Smith', '0405678456', 'james123@gmail.com', 'Yliopistokatu 10B 123', '90570', 'Oulu'),
+ ('John', '1234', 'John', 'Smith', '0403700897', 'john345@yahoo.com', 'Yliopistokatu 10B 456', '90570', 'Oulu'),
+ ('Robert', '1234', 'Robert', 'Smith', '040678231', 'robert@gamil.com', 'Yliopistokatu 10B 789', '90570', 'Oulu'),
+ ('Michael', '1234', 'Michael', 'Smith', '0401234567', 'mi234@yahoo.com', 'Yliopistokatu 10B 1011', '90570', 'Oulu')
 
 -- Insert dummy data into `parcel` table
 INSERT INTO `parcel`
@@ -79,26 +81,104 @@ INSERT INTO `parcel`
    `pin_code`, `status`, `desired_dropoff_locker`, `desired_pickup_locker`, `alternative_pickup_locker`,
    `parcel_height`, `parcel_width`, `parcel_depth`, `parcel_mass`)
 VALUES
-  (1, 'Receiver1', '987654321', '789 Elm St', '67890', 'City3', 'Sender1', '123456789', '123 Maple St', '54321', 'City4',
-   '2023-11-10', '2023-11-12', '2023-11-15',
-   1001, 'ready_to_deliver', 1, 2, NULL, 10.5, 8.2, 5.0, 2.3),
-  (2, 'Receiver2', '555555555', '456 Pine St', '12345', 'City5', 'Sender2', '111111111', '789 Birch St', '98765', 'City6',
-   '2023-11-11', '2023-11-13', '2023-11-16',
-   1002, 'ready_to_deliver', 1, 2, NULL, 12.0, 9.8, 6.2, 3.5);
+  (1, 'John Smith', '0405678456', 'Yliopistokatu 10B 123', '90570', 'Oulu',
+   'James Smith', '0403700897', 'Yliopistokatu 10B 456', '90570', 'Oulu',
+   NULL, NULL, NULL,
+   1234, 'ready_to_deliver', 1, 2, NULL,
+   0.5, 0.5, 0.5, 0.5),
+  (2, 'Robert Smith', '040678231', 'Yliopistokatu 10B 789', '90570', 'Oulu',
+   'John Smith', '0401234567', 'Yliopistokatu 10B 1011', '90570', 'Oulu',
+   NULL, NULL, NULL,
+   4567, 'ready_to_deliver', 1, 2, NULL,
+   0.5, 0.5, 0.5, 0.5),
+  (3, 'Michael Smith', '0401234567', 'Yliopistokatu 10B 1011', '90570', 'Oulu',
+   'Robert Smith', '040678231', 'Yliopistokatu 10B 789', '90570', 'Oulu',
+   NULL, NULL, NULL,
+   6756, 'ready_to_deliver', 1, 2, NULL,
+   0.5, 0.5, 0.5, 0.5
 
 -- Insert dummy data into `locker` table
-INSERT INTO `locker` (`id_cabinet`, `locker_number`, `cabinet_number`, `cabinet_status`, `parcel_id`)
+INSERT INTO `locker` (`locker_number`, `cabinet_number`, `cabinet_status`, `parcel_id`)
 VALUES
-  (1, 1, 1, 'free', NULL),
-  (2, 1, 2,'has_dropoff_parcel', 1),
-  (3, 1, 3, 'has_pickup_parcel', 2),
-  
-  (4, 2, 1, 'free', NULL),
-  (5, 2, 2, 'free', NULL),
-  
-  (6, 3, 1, 'has_pickup_parcel', 1),
-  (7, 3, 2, 'free', NULL);
+  (1, 1, 'free', NULL),
+  (2, 1, 'free', NULL),
+  (3, 1, 'free', NULL),
+  (4, 1, 'free', NULL),
+  (5, 1, 'free', NULL),
+  (6, 1, 'free', NULL),
+  (7, 1, 'free', NULL),
+  (8, 1, 'free', NULL),
+  (9, 1, 'free', NULL),
+  (10, 1, 'free', NULL),
+  (11, 1, 'free', NULL),
+  (12,1, 'free', NULL),
+  (13, 1, 'free', NULL),
+  (14, 1, 'free', NULL),
+  (15, 1, 'free', NULL),
 
+  (1, 2, 'free', NULL),
+  (2, 2, 'free', NULL),
+  (3, 2, 'free', NULL),
+  (4, 2, 'free', NULL),
+  (5, 2, 'free', NULL),
+  (6, 2, 'free', NULL),
+  (7, 2, 'free', NULL),
+  (8, 2, 'free', NULL),
+  (9, 2, 'free', NULL),
+  (10, 2, 'free', NULL);
+  (11, 2, 'free', NULL),
+  (12, 2, 'free', NULL),
+  (13, 2, 'free', NULL),
+  (14, 2, 'free', NULL),
+  (15, 2, 'free', NULL);
+
+  (1, 3, 'free', NULL),
+  (2, 3, 'free', NULL),
+  (3, 3, 'free', NULL),
+  (4, 3, 'free', NULL),
+  (5, 3, 'free', NULL),
+  (6, 3, 'free', NULL),
+  (7, 3, 'free', NULL),
+  (8, 3, 'free', NULL),
+  (9, 3, 'free', NULL),
+  (10, 3, 'free', NULL);
+  (11, 3, 'free', NULL),
+  (12, 3, 'free', NULL),
+  (13, 3, 'free', NULL),
+  (14, 3, 'free', NULL),
+  (15, 3, 'free', NULL);
+
+  (1, 4, 'free', NULL),
+  (2, 4, 'free', NULL),
+  (3, 4, 'free', NULL),
+  (4, 4, 'free', NULL),
+  (5, 4, 'free', NULL),
+  (6, 4, 'free', NULL),
+  (7, 4, 'free', NULL),
+  (8, 4, 'free', NULL),
+  (9, 4, 'free', NULL),
+  (10, 4, 'free', NULL);
+  (11, 4, 'free', NULL),
+  (12, 4, 'free', NULL),
+  (13, 4, 'free', NULL),
+  (14, 4, 'free', NULL),
+  (15, 4, 'free', NULL);
+
+  (1, 5, 'free', NULL),
+  (2, 5, 'free', NULL),
+  (3, 5, 'free', NULL),
+  (4, 5, 'free', NULL),
+  (5, 5, 'free', NULL),
+  (6, 5, 'free', NULL),
+  (7, 5, 'free', NULL),
+  (8, 5, 'free', NULL),
+  (9, 5, 'free', NULL),
+  (10, 5, 'free', NULL);
+  (11, 5, 'free', NULL),
+  (12, 5, 'free', NULL),
+  (13, 5, 'free', NULL),
+  (14, 5, 'free', NULL),
+  (15, 5, 'free', NULL);
 
 select * from user;
 select * from parcel;

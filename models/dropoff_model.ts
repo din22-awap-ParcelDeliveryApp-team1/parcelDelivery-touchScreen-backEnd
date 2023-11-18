@@ -24,14 +24,14 @@ const dropoff_model = {
   },
   
 
-// Find available cabinets for dropoff
-findAvailableCabinets: async (lockerNumber: number): Promise<number[]> => {
+// Find available cabinet id for dropoff
+findAvailableCabinetId: async (lockerNumber: number): Promise<number[]> => {
   try {
     const query = `
     SELECT locker.id_cabinet
     FROM locker
     JOIN parcel ON locker.locker_number = parcel.desired_dropoff_locker
-    WHERE locker.cabinet_status = 'free'`;
+    WHERE locker.locker_number = ? AND locker.cabinet_status = 'free'`;
 
     const [result] = await pool.promise().query<RowDataPacket[]>(query, [lockerNumber]);
 
@@ -42,6 +42,31 @@ findAvailableCabinets: async (lockerNumber: number): Promise<number[]> => {
     throw error;
   }
 },
+// get the cabinet number by cabinet id
+getCabinetNumber: async (cabinetId: number): Promise<number> => {
+  try {
+    const query = `
+    SELECT cabinet_number
+      FROM locker
+      WHERE id_cabinet = ?;`;
+
+    const [result] = await pool.promise().query<RowDataPacket[]>(query, [cabinetId]);
+
+    if (result.length === 0) {
+      // handle the case where the cabinet ID is not found
+      console.error('Cabinet ID not found:', cabinetId);
+      return -1; // or throw an error, depending on your error handling strategy
+    }
+
+    const cabinetNumber= result[0].cabinet_number;
+    console.log(`Cabinet Number for Cabinet ID ${cabinetId}: ${cabinetNumber}`)
+    return cabinetNumber;
+  } catch (error) {
+    console.error('Error finding cabinet number:', error);
+    throw error;
+  }
+},
+
 
  // Update cabinet status, parcel status, and invalidate dropoff code
  updateStatusAfterDropoff: async (selectedCabinet: number, parcelId: number): Promise<void> => {
@@ -59,7 +84,12 @@ findAvailableCabinets: async (lockerNumber: number): Promise<number[]> => {
     await pool.promise().query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
 
     // set the date of dropoff
-    await pool.promise().query('UPDATE parcel SET parcel_dropoff_date = NOW() WHERE id_parcel = ?', [parcelId]);
+    const updateDropoffDate =`
+                              UPDATE parcel
+                              SET parcel_dropoff_date = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+                              WHERE id_parcel = ?;
+                            `;
+    await pool.promise().query(updateDropoffDate, [parcelId]);
   } catch (error) {
     console.error('Error updating status after dropoff:', error);
     throw error;

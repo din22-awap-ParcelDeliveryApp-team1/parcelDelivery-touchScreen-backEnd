@@ -21,27 +21,26 @@ router.post('/dropoff', async (req, res) => {
         return res.status(404).json({ error: 'No parcel found for the specified dropoff code and locker number' });
       }
 
-      // Find available cabinets for dropoff in the specified locker
-      const availableCabinets = await dropoff_model.findAvailableCabinets(parseInt(lockerNumber));
+      // get available cabinet id for dropoff
+      const availableCabinetIds = await dropoff_model.findAvailableCabinetId(lockerNumber);
 
-      if (availableCabinets.length === 0) {
-        // No available cabinets, notify the user
-        return res.status(404).json({ error: 'No available lockers for dropoff in the specified locker, please come again later' });
+      // No available cabinets, notify the user
+      if (availableCabinetIds.length === 0) {
+        return res.status(404).json({ error: 'No available cabinets' });
       }
 
-    // Directly use the available cabinet from the user-selected locker
-    const selectedCabinet = availableCabinets[0];
+      // get the cabinet number of the randomly selected cabinet
+      const selectedCabinetId = availableCabinetIds[0];
+      const selectedCabinetNumber = await dropoff_model.getCabinetNumber(selectedCabinetId);
 
-    // Open the cabinet door
-    res.json({
-    message: `Door ${selectedCabinet} open for dropoff in locker ${lockerNumber}, put your package inside and close the door`,
-    cabinetNumber: selectedCabinet,
-    lockerNumber: lockerNumber,
-    });
- 
-    // after the user closes the door
-    await dropoff_model.updateStatusAfterDropoff(selectedCabinet, result.parcelId);
-  
+      // Open the cabinet door
+      res.json({
+        message: `Door ${selectedCabinetNumber} open for dropoff, put your package inside and close the door`,
+        lockerNumber: lockerNumber,
+      });
+
+      // after the user closes the door
+      await dropoff_model.updateStatusAfterDropoff(selectedCabinetId, result.parcelId);
     } else {
       // Code is invalid or conditions not met
       res.status(403).json({ error: 'Incorrect dropoff code or locker number' });

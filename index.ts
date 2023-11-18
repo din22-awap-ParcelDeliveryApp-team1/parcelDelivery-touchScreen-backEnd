@@ -15,7 +15,7 @@ app.use('/locker', pickup_controller);
 const port: number = 3001;
 
 // Test database connection
-pool.getConnection((err, connection) => {
+pool.getConnection((err) => {
     if (err) {
         console.error('An error occurred while connecting to the DB');
         return;

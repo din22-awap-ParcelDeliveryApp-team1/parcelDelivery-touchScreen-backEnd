@@ -29,22 +29,22 @@ router.post('/dropoff', (req, res) => __awaiter(void 0, void 0, void 0, function
                 // No associated parcel, return error immediately
                 return res.status(404).json({ error: 'No parcel found for the specified dropoff code and locker number' });
             }
-            // Find available cabinets for dropoff in the specified locker
-            const availableCabinets = yield dropoff_model_1.default.findAvailableCabinets(parseInt(lockerNumber));
-            if (availableCabinets.length === 0) {
-                // No available cabinets, notify the user
-                return res.status(404).json({ error: 'No available lockers for dropoff in the specified locker, please come again later' });
+            // get available cabinet id for dropoff
+            const availableCabinetIds = yield dropoff_model_1.default.findAvailableCabinetId(lockerNumber);
+            // No available cabinets, notify the user
+            if (availableCabinetIds.length === 0) {
+                return res.status(404).json({ error: 'No available cabinets' });
             }
-            // Directly use the available cabinet from the user-selected locker
-            const selectedCabinet = availableCabinets[0];
+            // get the cabinet number of the randomly selected cabinet
+            const selectedCabinetId = availableCabinetIds[0];
+            const selectedCabinetNumber = yield dropoff_model_1.default.getCabinetNumber(selectedCabinetId);
             // Open the cabinet door
             res.json({
-                message: `Door ${selectedCabinet} open for dropoff in locker ${lockerNumber}, put your package inside and close the door`,
-                cabinetNumber: selectedCabinet,
+                message: `Door ${selectedCabinetNumber} open for dropoff, put your package inside and close the door`,
                 lockerNumber: lockerNumber,
             });
             // after the user closes the door
-            yield dropoff_model_1.default.updateStatusAfterDropoff(selectedCabinet, result.parcelId);
+            yield dropoff_model_1.default.updateStatusAfterDropoff(selectedCabinetId, result.parcelId);
         }
         else {
             // Code is invalid or conditions not met
