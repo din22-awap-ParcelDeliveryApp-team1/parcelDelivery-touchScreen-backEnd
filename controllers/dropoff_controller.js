@@ -33,7 +33,7 @@ router.post('/dropoff', (req, res) => __awaiter(void 0, void 0, void 0, function
             const availableCabinetIds = yield dropoff_model_1.default.findAvailableCabinetId(lockerNumber);
             // No available cabinets, notify the user
             if (availableCabinetIds.length === 0) {
-                return res.status(404).json({ error: 'No available cabinets' });
+                return res.status(404).json({ error: 'No available cabinets at this moment, Please contact the customer service' });
             }
             // get the cabinet number of the randomly selected cabinet
             const selectedCabinetId = availableCabinetIds[0];

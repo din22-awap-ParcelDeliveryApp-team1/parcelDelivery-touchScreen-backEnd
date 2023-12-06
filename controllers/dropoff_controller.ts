@@ -26,7 +26,7 @@ router.post('/dropoff', async (req, res) => {
 
       // No available cabinets, notify the user
       if (availableCabinetIds.length === 0) {
-        return res.status(404).json({ error: 'No available cabinets' });
+        return res.status(404).json({ error: 'No available cabinets at this moment, Please contact the customer service' });
       }
 
       // get the cabinet number of the randomly selected cabinet
