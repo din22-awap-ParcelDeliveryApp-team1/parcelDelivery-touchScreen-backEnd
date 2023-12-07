@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/locker', dropoff_controller);
 app.use('/locker', pickup_controller);
 
-const port: number = 3001;
+const port = process.env.PORT || 3001;
 
 // Test database connection
 pool.getConnection((err) => {
