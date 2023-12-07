@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - DriveMe-touchscreen-backend
+name: Build and deploy Node.js app to Azure Web App - driveme-touchscreen-backend
 
 on:
   push:
@@ -50,7 +50,7 @@ jobs:
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
-          app-name: 'DriveMe-touchscreen-backend'
+          app-name: 'driveme-touchscreen-backend'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_45E5AFBCF7294DFF9F6E5DFC3ECE4848 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A87059C2AF4C4209B5BF3591B68179D9 }}
           package: .
