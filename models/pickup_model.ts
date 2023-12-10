@@ -1,10 +1,11 @@
-import pool from '../dataBase';
+import {pool} from '../dataBase';
 import { RowDataPacket } from 'mysql2';
 
 const pickup_model = {
  // Verify pickup code
  verifyPickupCode: async (pickupCode: number, lockerNumber: number): Promise<{ isValid: boolean; parcelId?: number }> => {
   try {
+    const nonNullPool = pool!;
     const query = `
     SELECT id_parcel
     FROM parcel
@@ -17,7 +18,7 @@ const pickup_model = {
       ) = ? AND status = 'parcel_in_pickup_locker';
     `;
 
-    const [result] = await pool.promise().query<RowDataPacket[]>(query, [pickupCode, lockerNumber]);
+    const [result] = await nonNullPool.query<RowDataPacket[]>(query, [pickupCode, lockerNumber]);
 
     if (result.length > 0) {
       return { isValid: true, parcelId: result[0].id_parcel };
@@ -32,13 +33,14 @@ const pickup_model = {
 // Find cabinet_id with parcel_id in locker table
 findCabinetId: async (parcelId: number): Promise<number> => {
   try {
+    const nonNullPool = pool!;
     const getCabinetIdQuery = `
       SELECT id_cabinet
       FROM locker
       WHERE parcel_id = ?;
     `;
 
-    const [cabinetResult] = await pool.promise().query<RowDataPacket[]>(getCabinetIdQuery, [parcelId]);
+    const [cabinetResult] = await nonNullPool.query<RowDataPacket[]>(getCabinetIdQuery, [parcelId]);
 
     if (cabinetResult.length === 0) {
       // handle the case where the cabinet ID is not found
@@ -57,13 +59,14 @@ findCabinetId: async (parcelId: number): Promise<number> => {
 // Find cabinet_number with cabinet_id in locker table
 findCabinetNumber: async (cabinetId: number): Promise<number> => {
   try {
+    const nonNullPool = pool!;
     const getCabinetNumberQuery = `
       SELECT cabinet_number
       FROM locker
       WHERE id_cabinet = ?;
     `;
 
-    const [numberResult] = await pool.promise().query<RowDataPacket[]>(getCabinetNumberQuery, [cabinetId]);
+    const [numberResult] = await nonNullPool.query<RowDataPacket[]>(getCabinetNumberQuery, [cabinetId]);
 
     if (numberResult.length === 0) {
       // handle the case where the cabinet number is not found
@@ -83,17 +86,18 @@ findCabinetNumber: async (cabinetId: number): Promise<number> => {
   // update status after pickup
   updateStatusAfterPickup: async (cabinetId: number, parcelId: number): Promise<void> => {
     try {
+      const nonNullPool = pool!;
       // Update cabinet status
-      await pool.promise().query('UPDATE locker SET cabinet_status = ? WHERE id_cabinet = ?', ['free', cabinetId]);
+      await nonNullPool.query('UPDATE locker SET cabinet_status = ? WHERE id_cabinet = ?', ['free', cabinetId]);
 
       // Update parcel status
-      await pool.promise().query('UPDATE parcel SET status = ? WHERE id_parcel = ?', ['reciever_recieved_parcel', parcelId]);
+      await nonNullPool.query('UPDATE parcel SET status = ? WHERE id_parcel = ?', ['reciever_recieved_parcel', parcelId]);
 
       // Remove pickup code from pincode in parcel table
-      await pool.promise().query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
+      await nonNullPool.query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
 
       // Remove parcel id from selected cabinet in locker table
-      await pool.promise().query('UPDATE locker SET parcel_id = NULL WHERE id_cabinet = ?', [cabinetId]);
+      await nonNullPool.query('UPDATE locker SET parcel_id = NULL WHERE id_cabinet = ?', [cabinetId]);
 
       // set the date of pickup
       const updatePickupDate =`
@@ -101,7 +105,7 @@ findCabinetNumber: async (cabinetId: number): Promise<number> => {
                               SET parcel_pickup_date = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
                               WHERE id_parcel = ?;
                             `;
-    await pool.promise().query(updatePickupDate, [parcelId]);
+    await nonNullPool.query(updatePickupDate, [parcelId]);
     
     } catch (error) {
       console.error('Error updating status after pickup:', error);

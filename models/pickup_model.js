@@ -8,15 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const dataBase_1 = __importDefault(require("../dataBase"));
+const dataBase_1 = require("../dataBase");
 const pickup_model = {
     // Verify pickup code
     verifyPickupCode: (pickupCode, lockerNumber) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const nonNullPool = dataBase_1.pool;
             const query = `
     SELECT id_parcel
     FROM parcel
@@ -28,7 +26,7 @@ const pickup_model = {
         END
       ) = ? AND status = 'parcel_in_pickup_locker';
     `;
-            const [result] = yield dataBase_1.default.promise().query(query, [pickupCode, lockerNumber]);
+            const [result] = yield nonNullPool.query(query, [pickupCode, lockerNumber]);
             if (result.length > 0) {
                 return { isValid: true, parcelId: result[0].id_parcel };
             }
@@ -42,12 +40,13 @@ const pickup_model = {
     // Find cabinet_id with parcel_id in locker table
     findCabinetId: (parcelId) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const nonNullPool = dataBase_1.pool;
             const getCabinetIdQuery = `
       SELECT id_cabinet
       FROM locker
       WHERE parcel_id = ?;
     `;
-            const [cabinetResult] = yield dataBase_1.default.promise().query(getCabinetIdQuery, [parcelId]);
+            const [cabinetResult] = yield nonNullPool.query(getCabinetIdQuery, [parcelId]);
             if (cabinetResult.length === 0) {
                 // handle the case where the cabinet ID is not found
                 console.error('Cabinet ID not found for parcel ID:', parcelId);
@@ -63,12 +62,13 @@ const pickup_model = {
     // Find cabinet_number with cabinet_id in locker table
     findCabinetNumber: (cabinetId) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const nonNullPool = dataBase_1.pool;
             const getCabinetNumberQuery = `
       SELECT cabinet_number
       FROM locker
       WHERE id_cabinet = ?;
     `;
-            const [numberResult] = yield dataBase_1.default.promise().query(getCabinetNumberQuery, [cabinetId]);
+            const [numberResult] = yield nonNullPool.query(getCabinetNumberQuery, [cabinetId]);
             if (numberResult.length === 0) {
                 // handle the case where the cabinet number is not found
                 console.error('Cabinet number not found for ID:', cabinetId);
@@ -84,21 +84,22 @@ const pickup_model = {
     // update status after pickup
     updateStatusAfterPickup: (cabinetId, parcelId) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const nonNullPool = dataBase_1.pool;
             // Update cabinet status
-            yield dataBase_1.default.promise().query('UPDATE locker SET cabinet_status = ? WHERE id_cabinet = ?', ['free', cabinetId]);
+            yield nonNullPool.query('UPDATE locker SET cabinet_status = ? WHERE id_cabinet = ?', ['free', cabinetId]);
             // Update parcel status
-            yield dataBase_1.default.promise().query('UPDATE parcel SET status = ? WHERE id_parcel = ?', ['reciever_recieved_parcel', parcelId]);
+            yield nonNullPool.query('UPDATE parcel SET status = ? WHERE id_parcel = ?', ['reciever_recieved_parcel', parcelId]);
             // Remove pickup code from pincode in parcel table
-            yield dataBase_1.default.promise().query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
+            yield nonNullPool.query('UPDATE parcel SET pin_code = NULL WHERE id_parcel = ?', [parcelId]);
             // Remove parcel id from selected cabinet in locker table
-            yield dataBase_1.default.promise().query('UPDATE locker SET parcel_id = NULL WHERE id_cabinet = ?', [cabinetId]);
+            yield nonNullPool.query('UPDATE locker SET parcel_id = NULL WHERE id_cabinet = ?', [cabinetId]);
             // set the date of pickup
             const updatePickupDate = `
                               UPDATE parcel
                               SET parcel_pickup_date = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
                               WHERE id_parcel = ?;
                             `;
-            yield dataBase_1.default.promise().query(updatePickupDate, [parcelId]);
+            yield nonNullPool.query(updatePickupDate, [parcelId]);
         }
         catch (error) {
             console.error('Error updating status after pickup:', error);
