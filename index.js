@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const dataBase_1 = __importDefault(require("./dataBase"));
+const dataBase_1 = require("./dataBase");
 const dropoff_controller_1 = __importDefault(require("./controllers/dropoff_controller"));
 const pickup_controller_1 = __importDefault(require("./controllers/pickup_controller"));
 const app = (0, express_1.default)();
@@ -16,13 +16,7 @@ app.use('/locker', dropoff_controller_1.default);
 app.use('/locker', pickup_controller_1.default);
 const port = process.env.PORT || 3001;
 // Test database connection
-dataBase_1.default.getConnection((err) => {
-    if (err) {
-        console.error('An error occurred while connecting to the DB');
-        return;
-    }
-    console.log('MySQL Connection established');
-});
+(0, dataBase_1.getConnection)();
 app.get('/', (req, res) => {
     res.status(200).json({ result: 'success' });
 });
